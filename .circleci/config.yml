@@ -1,12 +1,12 @@
 version: 2.1
 
 orbs:
-  kubernetes: circleci/kubernetes@0.12.0
-  aws-cli: circleci/aws-cli@2.0
-  aws-eks: circleci/aws-eks@0.2.3
+  aws-eks: circleci/aws-eks@0.2.0
+  aws-ecr: circleci/aws-ecr@3.1.0
+  kubernetes: circleci/kubernetes@0.3.0
 
 jobs:
-  build:
+  build-app:
     docker:
       # Use the same Docker base as the project
       - image: python:3.7.3-stretch
@@ -41,12 +41,16 @@ jobs:
           command: |
             . venv/bin/activate
             make lint
-  push-app:
+  build-image:
     machine: true
     steps:
       - checkout
       - run:
-          name: Build and push docker container
+          name: Create repository
+          command:
+            aws ecr create-repository --region us-east-1 --repository-name capstoneproj:latest
+      - run:
+          name: Build image and push to docker
           command: |
               docker login --username ${DOCKER_USERNAME} --password ${DOCKER_PASS}
               docker build -t capstoneproj:latest .
@@ -67,7 +71,7 @@ jobs:
             unzip awscliv2.zip
             sudo ./aws/install
       - run:
-          name: Update Docker Image to ECS
+          name: Deploy Docker Container Image to Amazon ECR
           command: |
             echo "Pre-Build Steps:"
             echo "authenticating with AWS ECR..."
@@ -92,7 +96,7 @@ jobs:
 workflows:
   default:
     jobs:
-      - build
+      - build-app
       - push-app:
           requires: [build]
           filters:

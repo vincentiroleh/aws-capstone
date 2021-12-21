@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aws-caostoneproj
+  labels:
+    app: aws-caostoneproj
+spec:
+  selector:
+    matchLabels:
+      app: aws-caostoneproj
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: aws-caostoneproj
+    spec:
+      containers:
+      - name: app
+        image: iroleh/capstoneproj:latest
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 8080
