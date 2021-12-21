@@ -97,7 +97,7 @@ workflows:
   default:
     jobs:
       - build-app
-      - push-app:
+      - build-image:
           requires: [build]
           filters:
             branches:
