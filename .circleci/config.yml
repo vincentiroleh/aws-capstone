@@ -98,9 +98,9 @@ workflows:
     jobs:
       - build-app
       - build-image:
-          requires: [build]
+          requires: [build-app]
           filters:
             branches:
               only: [main]
       - deploy-app:
-          requires: [push-app]
+          requires: [build-image]
