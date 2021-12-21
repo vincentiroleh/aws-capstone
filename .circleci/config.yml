@@ -51,7 +51,7 @@ jobs:
               docker login --username ${DOCKER_USERNAME} --password ${DOCKER_PASS}
               docker build -t capstoneproj:latest .
               docker images ls
-              docker tag awscicd ${DOCKER_USERNAME}/capstoneproj:latest
+              docker tag capstoneproj ${DOCKER_USERNAME}/capstoneproj:latest
               docker push ${DOCKER_USERNAME}/capstoneproj:latest
   deploy-app:
     machine: true
