@@ -16,6 +16,6 @@ echo "pushing image to AWS ECR..."
 docker push 162041392922.dkr.ecr.us-east-1.amazonaws.com/capstoneproj:latest
 
 echo "updating AWS ECS service..."
-aws ecs update-service --cluster capstoneproj-cluster --service caostoneproj-sv --force-new-deployment
+aws ecs update-service --cluster capstoneproj-cluster --service caostoneproj-sv --force-new-deployment --no-cli-pager
 
 echo "Done!"
