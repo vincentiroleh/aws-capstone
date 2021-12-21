@@ -1,8 +1,10 @@
-import flask
-from flask import request, jsonify
+from flask import Flask, jsonify
+from flask.logging import create_logger
+import logging
 
-app = flask.Flask(__name__)
-app.config["DEBUG"] = True
+app = Flask(__name__)
+LOG = create_logger(app)
+LOG.setLevel(logging.INFO)
 
 
 books = [
@@ -23,12 +25,17 @@ books = [
      'published': '1975'}
 ]
 
+user = {'id': 0,
+     'name': 'Vincent Iroleh',
+     'project': 'Capstone Project - Udacity',
+     'year_published': '2021'},
+     
 @app.route('/', methods=['GET'])
 def home():
-    return "Vincent Iroleh Capstone Project."
+    return jsonify(user)
 
 @app.route('/api/v1/books', methods=['GET'])
 def api_all():
     return jsonify(books)
     
-app.run()
+app.run(host='0.0.0.0', port=80, debug=True) # specify port=80
