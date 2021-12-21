@@ -1,13 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: aws-caostoneproj
+  name: aws-capstoneproj
   labels:
-    app: aws-caostoneproj
+    app: aws-capstoneproj
 spec:
   selector:
     matchLabels:
-      app: aws-caostoneproj
+      app: aws-capstoneproj
   replicas: 3
   strategy:
     rollingUpdate:
@@ -17,7 +17,7 @@ spec:
   template:
     metadata:
       labels:
-        app: aws-caostoneproj
+        app: aws-capstoneproj
     spec:
       containers:
       - name: app
