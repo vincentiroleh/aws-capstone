@@ -47,7 +47,7 @@ jobs:
       - run:
           name: Create repository
           command:
-            aws ecr create-repository --region us-east-1 --repository-name capstoneproj
+            aws ecr create-repository --region us-east-1 --repository-name capstoneproj | true
       - run:
           name: Build image and push to docker
           command: |
