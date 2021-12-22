@@ -102,19 +102,17 @@ jobs:
         type: string
         default: ""
     steps:
+      no_output_timeout: 30m
       - checkout
       - aws-eks/update-kubeconfig-with-authenticator:
-          no_output_timeout: 30m
           cluster-name: << parameters.cluster-name >>
           install-kubectl: true
           aws-region: << parameters.aws-region >>
       - kubernetes/create-or-update-resource:
-          no_output_timeout: 30m
           get-rollout-status: true
           resource-file-path: deployment/app-deployment.yaml
           resource-name: deployment/capstoneproj
       - kubernetes/create-or-update-resource:
-          no_output_timeout: 30m
           resource-file-path: deployment/app-service.yaml
         
 workflows:
