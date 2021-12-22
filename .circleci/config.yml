@@ -89,32 +89,6 @@ jobs:
       - aws-eks/create-cluster:
           cluster-name: capstoneproj
           node-type: t3.micro
-  test-cluster:
-    executor: aws-eks/python3
-    parameters:
-      cluster-name:
-        description: |
-          Name of the EKS cluster
-        type: string
-      aws-region:
-        description: |
-          AWS region
-        type: string
-        default: ""
-    steps:
-      - kubernetes/install
-      - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: << parameters.cluster-name >>
-          aws-region: << parameters.aws-region >>
-      - run:
-          command: |
-            kubectl get services
-            kubectl get pods
-            kubectl describe pods
-            kubectl get nodes
-            kubectl get deployment
-            kubectl get services -o wide
-          name: Test cluster
   create-deployment:
     executor: aws-eks/python3
     parameters:
@@ -130,14 +104,17 @@ jobs:
     steps:
       - checkout
       - aws-eks/update-kubeconfig-with-authenticator:
+          no_output_timeout: 30m
           cluster-name: << parameters.cluster-name >>
           install-kubectl: true
           aws-region: << parameters.aws-region >>
       - kubernetes/create-or-update-resource:
+          no_output_timeout: 30m
           get-rollout-status: true
           resource-file-path: deployment/app-deployment.yaml
           resource-name: deployment/capstoneproj
       - kubernetes/create-or-update-resource:
+          no_output_timeout: 30m
           resource-file-path: deployment/app-service.yaml
         
 workflows:
@@ -151,14 +128,9 @@ workflows:
               only: [main]
       - create-cluster:
           requires: [build-and-push-image]
-      - test-cluster:
-          cluster-name: capstoneproj
-          aws-region: us-east-1
-          requires:
-            - create-cluster
       - create-deployment:
           cluster-name: capstoneproj
           aws-region: us-east-1
           requires:
-            - test-cluster
+            - create-cluster
         

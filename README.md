@@ -21,11 +21,6 @@ Once you have completed your Continuous Integration you will set up Continuous D
 
 ---
 
-## Project Demo
-
-Home Endpoint: http://capstoneproj-lb-1251132517.us-east-1.elb.amazonaws.com/
-Books Endpoint: http://capstoneproj-lb-1251132517.us-east-1.elb.amazonaws.com/api/v1/books
-
 ## Setup the Environment
 
 * Create a virtualenv with Python 3.7 and activate it. Refer to this link for help on specifying the Python version in the virtualenv. 
