@@ -1,5 +1,1 @@
 GitHub Repo: https://github.com/vincentiroleh/aws-capstone
-
-Home Endpoint: http://capstoneproj-lb-1251132517.us-east-1.elb.amazonaws.com/
-
-Books Endpoint: http://capstoneproj-lb-1251132517.us-east-1.elb.amazonaws.com/api/v1/books
