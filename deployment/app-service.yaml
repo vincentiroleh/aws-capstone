@@ -1,7 +1,8 @@
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: capstoneproj-sv
+  name: capstoneproj
   labels:
     app: capstoneproj
 spec:

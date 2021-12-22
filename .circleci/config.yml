@@ -1,8 +1,14 @@
 version: 2.1
 
 orbs:
-  aws-cli: circleci/aws-cli@2.0.3 
-  aws-eks: circleci/aws-eks@0.2.3
+  aws-eks: circleci/aws-eks@1.1.0
+  kubernetes: circleci/kubernetes@0.4.0
+  
+parameters:
+  docker_image:
+    type: string
+    default: python:3.10.0-bullseye
+
 
 jobs:
   build-app:
@@ -40,14 +46,10 @@ jobs:
           command: |
             . venv/bin/activate
             make lint
-  build-image:
+  build-and-push-image:
     machine: true
     steps:
       - checkout
-      - run:
-          name: Create repository
-          command:
-            aws ecr describe-repositories --region us-east-1 --repository-names capstoneproj || aws ecr create-repository --region us-east-1 --repository-name capstoneproj
       - run:
           name: Build image and push to docker
           command: |
@@ -56,50 +58,107 @@ jobs:
               docker images ls
               docker tag capstoneproj ${DOCKER_USERNAME}/capstoneproj:latest
               docker push ${DOCKER_USERNAME}/capstoneproj:latest
-  deploy-app:
-    machine: true
+  create-cluster:
+    executor: aws-eks/python3
+    parameters:
+      cluster-name:
+        description: |
+          Name of the EKS cluster
+        type: string
+        default: capstoneproj
+    steps:
+      - run:
+          name: Install the eksctl tool
+          command: |
+            if which eksctl > /dev/null; then
+              echo "eksctl is already installed"
+              exit 0
+            fi
+            mkdir -p eksctl_download
+            curl --silent --location --retry 5 "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
+              | tar xz -C eksctl_download
+            chmod +x eksctl_download/eksctl
+            SUDO=""
+            if [ $(id -u) -ne 0 ] && which sudo > /dev/null ; then
+              SUDO="sudo"
+            fi
+            $SUDO mv eksctl_download/eksctl /usr/local/bin/
+            rmdir eksctl_download
+      - aws-eks/install-aws-iam-authenticator:
+          release-tag: ''
+      - aws-eks/create-cluster:
+          cluster-name: capstoneproj
+          node-type: t3.micro
+  test-cluster:
+    executor: aws-eks/python3
+    parameters:
+      cluster-name:
+        description: |
+          Name of the EKS cluster
+        type: string
+      aws-region:
+        description: |
+          AWS region
+        type: string
+        default: ""
+    steps:
+      - kubernetes/install
+      - aws-eks/update-kubeconfig-with-authenticator:
+          cluster-name: << parameters.cluster-name >>
+          aws-region: << parameters.aws-region >>
+      - run:
+          command: |
+            kubectl get services
+            kubectl get pods
+            kubectl describe pods
+            kubectl get nodes
+            kubectl get deployment
+            kubectl get services -o wide
+          name: Test cluster
+  create-deployment:
+    executor: aws-eks/python3
+    parameters:
+      cluster-name:
+        description: |
+          Name of the EKS cluster
+        type: string
+      aws-region:
+        description: |
+          AWS region
+        type: string
+        default: ""
     steps:
       - checkout
-      - run:
-          name: Install AWS CLI dependencies
-          working_directory: /tmp
-          command: |
-            sudo apt-get update && sudo apt-get install -yy less
-            sudo apt-get install unzip -y
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-      - run:
-          name: Deploy Docker Container Image to Amazon ECR
-          command: |
-            echo "Pre-Build Steps:"
-            echo "authenticating with AWS ECR..."
-            
-            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 162041392922.dkr.ecr.us-east-1.amazonaws.com
-            
-            echo "Build Steps:"
-            echo "building image..."
-            
-            docker build -t 162041392922.dkr.ecr.us-east-1.amazonaws.com/capstoneproj:latest .
-            
-            echo "Post-Build Steps:"
-            echo "pushing image to AWS ECR..."
-            
-            docker push 162041392922.dkr.ecr.us-east-1.amazonaws.com/capstoneproj:latest
-            
-            echo "updating AWS ECS service..."
-            aws ecs update-service --cluster capstoneproj-cluster --service caostoneproj-sv --force-new-deployment --no-cli-pager
-            
-            echo "Done!"
+      - aws-eks/update-kubeconfig-with-authenticator:
+          cluster-name: << parameters.cluster-name >>
+          install-kubectl: true
+          aws-region: << parameters.aws-region >>
+      - kubernetes/create-or-update-resource:
+          get-rollout-status: true
+          resource-file-path: deployment/app-deployment.yaml
+          resource-name: deployment/capstoneproj
+      - kubernetes/create-or-update-resource:
+          resource-file-path: deployment/app-service.yaml
         
 workflows:
   default:
     jobs:
       - build-app
-      - build-image:
+      - build-and-push-image:
           requires: [build-app]
           filters:
             branches:
               only: [main]
-      - deploy-app:
-          requires: [build-image]
+      - create-cluster:
+          requires: [build-and-push-image]
+      - test-cluster:
+          cluster-name: capstoneproj
+          aws-region: us-east-1
+          requires:
+            - create-cluster
+      - create-deployment:
+          cluster-name: capstoneproj
+          aws-region: us-east-1
+          requires:
+            - test-cluster
+        
