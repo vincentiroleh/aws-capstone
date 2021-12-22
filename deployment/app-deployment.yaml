@@ -1,30 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: aws-caostoneproj
+  name: capstoneproj
   labels:
-    app: aws-caostoneproj
+    app: capstoneproj
 spec:
   selector:
     matchLabels:
-      app: aws-caostoneproj
+      app: capstoneproj
   replicas: 3
   strategy:
     rollingUpdate:
       maxSurge: 1
-      maxUnavailable: 25%
+      maxUnavailable: 0
     type: RollingUpdate
   template:
     metadata:
       labels:
-        app: aws-caostoneproj
+        app: capstoneproj
     spec:
       containers:
-      - name: app
+      - name: capstoneproj
         image: iroleh/capstoneproj:latest
+        imagePullPolicy: Always
         resources:
           requests:
-            cpu: 100m
-            memory: 100Mi
+            memory: "128Mi"
+            cpu: "500m"
         ports:
         - containerPort: 8080
